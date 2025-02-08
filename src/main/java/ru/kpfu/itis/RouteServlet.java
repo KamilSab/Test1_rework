@@ -21,13 +21,24 @@ public class RouteServlet extends HttpServlet {
         String pointB = req.getParameter("pointB");
         String transportType = req.getParameter("transportType");
 
-        System.out.println("pointA: " + pointA);
-        System.out.println("pointB: " + pointB);
-        System.out.println("transportType: " + transportType);
+        // Валидация
+        if (pointA == null || pointB == null || transportType == null) {
+            resp.getWriter().write("{\"error\": \"Все поля обязательны для заполнения.\"}");
+            return;
+        }
 
-        String jsonResponse = DgisApiService.getRoute(pointA, pointB, transportType);
+        String regex = "^-?\\d+(\\.\\d+)?,-?\\d+(\\.\\d+)?$";
+        if (!pointA.matches(regex) || !pointB.matches(regex)) {
+            resp.getWriter().write("{\"error\": \"Некорректный формат координат.\"}");
+            return;
+        }
 
-        resp.setContentType("application/json");
-        resp.getWriter().write(jsonResponse);
+        try {
+            String jsonResponse = DgisApiService.getRoute(pointA, pointB, transportType);
+            resp.setContentType("application/json");
+            resp.getWriter().write(jsonResponse);
+        } catch (IOException e) {
+            resp.getWriter().write("{\"error\": \"Ошибка при запросе к API: " + e.getMessage() + "\"}");
+        }
     }
 }
